@@ -1,7 +1,6 @@
 var express = require('express');
 var router = express.Router();
-var mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost/production');
+var db_functions = require('../db_logic/db.js')
 
 
 /* GET home page. */
@@ -9,24 +8,19 @@ router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
 });
 
-var itemsSchema = new mongoose.Schema({
-  title: String
-})
 
-var item = mongoose.model("items", itemsSchema);
-module.exports = item;
 router.get('/products/', function(req, res, next) {
-
-  item.find(function (error, items) {
-    var itemsMap = {};
-
-    items.forEach(function(i) {
-      itemsMap[i._id] = i;
-    });
-
-    res.send(itemsMap);
+  console.log("1");
+  db_functions.findItems(function(itemsList){
+    console.log(itemsList);
+    res.json(itemsList);
   });
+});
 
+router.post('/products/', function(req, res) {
+  var item = req;
+  var status = saveItems(item);
+  res.send(status);
 });
 
 module.exports = router;

@@ -5,14 +5,14 @@
 	"owner_id": 1,
 	"title": "Item",
 	"description": "Description",
-  "category": "bike/snowboard"
+  "category": "bike/snowboard",
 	"price": 1,
 	"picture_path": "/path/to/img.jpg",
 	"state": "free/rented/expired",
 	"endDate": "01-02-2015-14-00",
   "location": "x:y"
 }
-{ "id": 1, "owner_id": 1, "title": "Item", "description": "Description", "category": "bike/snowboard" "price": 1, "picture_path": "/path/to/img.jpg", "state": "free/rented/expired", "endDate": "01-02-2015-14-00", "location": "x:y" }
+{ "id": 45, "owner_id": 1, "title": "Item", "description": "Description", "category": "bike/snowboard" "price": 1, "picture_path": "/path/to/img.jpg", "state": "free/rented/expired", "endDate": "01-02-2015-14-00", "location": "x:y" }
 
 # Users
 {
