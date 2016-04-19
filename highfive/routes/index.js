@@ -9,7 +9,7 @@ router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
 });
 
-var itemsSchema =  new mongoose.Schema({
+var itemsSchema = new mongoose.Schema({
   title: String
 })
 
@@ -17,7 +17,7 @@ var item = mongoose.model("items", itemsSchema);
 module.exports = item;
 router.get('/products/', function(req, res, next) {
 
-  item.find({"id": 1}, function (error, items) {
+  item.find(function (error, items) {
     var itemsMap = {};
 
     items.forEach(function(i) {
