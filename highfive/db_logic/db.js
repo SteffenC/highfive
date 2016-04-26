@@ -1,16 +1,19 @@
 var mongoose = require('mongoose');
+var ObjectId = require('mongoose').Types.ObjectId;
+
 mongoose.connect('mongodb://localhost/production');
 
 var itemsSchema = new mongoose.Schema({
+  _id: Object,
   title: String,
   description: String,
   category: String,
   price: Number,
-  picture: String,
+  picture_path: String,
   state: String,
   endDate: String,
   location: String,
-  owner_id: Number
+  owner_id: [{ type: Number, ref: 'Users' }]
 })
 
 var itemModel = mongoose.model("items", itemsSchema);
@@ -22,22 +25,35 @@ var usersSchema = new mongoose.Schema({
   lastName: String,
   email: String,
   location: String,
-  pwdHash: String,
+  password: String,
+  salt: String,
   AuthType: String
 })
 
 var usersModel = mongoose.model("users", usersSchema);
 //module.exports = itemModel;
 
+var oauthTokenSchema = new mongoose.Schema({
+  token: String,
+  user_id: String,
+  expires: String
+})
 
+var oauthTokenModel = mongoose.model("oauthToken", oauthTokenSchema);
 
 exports.findItems = function(callback){
   itemModel.find(function (error, items) {
     var itemsList = [];
     items.forEach(function(i) {
-      itemsList.push({"title": i.title, "description": i.description, "price": i.price, "picture": i.picture_path, "owner_er": i.owner_id});
+      itemsList.push({"title": i.title, "description": i.description, "price": i.price, "picture": i.picture_path, "owner_id": i.owner_id, "_id": i.id});
     });
     callback(itemsList);
+  });
+}
+
+exports.findItemByBy = function(id, callback){
+  itemModel.findOne( { _id: ObjectId(id)}, "title description price", function(err, obj){
+      callback(obj);
   });
 }
 
@@ -58,8 +74,29 @@ exports.findUsers = function(callback) {
   });
 }
 
-exports.saveUser = function(user, callback) {
+exports.fetchSalt = function(user, callback) {
+  console.log(user);
+  usersModel.findOne(user, function(err, obj){
+    console.log("hello");
+    callback(err, obj);
+  });
+}
+
+exports.saveUser = function(user, success) {
+  console.log(user);
    new usersModel(user).save(function(e){
-     callback(200);
+     success();
    });
+}
+
+exports.saveAuthToken = function(user, token, success) {
+  new oauthTokenModel(token).save(function(e) {
+    success();
+  })
+}
+
+exports.findAuthToken = function(user, success) {
+  oauthTokenModel.findOne(user, function(err, obj) {
+    success(obj);
+  })
 }

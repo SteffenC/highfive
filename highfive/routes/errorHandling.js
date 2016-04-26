@@ -1,5 +1,5 @@
 exports.denied = function(res){
-console.log(403);
+  res.sendStatus(403);
 }
 
 exports.ok = function(res){

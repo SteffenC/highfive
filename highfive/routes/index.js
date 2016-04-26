@@ -1,13 +1,17 @@
-var express = require('express');
-var router = express.Router();
-var db_functions = require('../db_logic/db.js');
-var auth = require('./auth.js');
-var status = require('./errorHandling.js');
+var express       = require('express');
+var auth          = require('./auth.js');
+var status        = require('./errorHandling.js');
+var db_functions  = require('../db_logic/db.js');
+var crypto        = require("./crypto.js");
+var userModel     = require("./user.js");
+var router        = express.Router();
 
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+
+});
+router.post('/', function(req, res) {
 });
 
 /**
@@ -21,9 +25,16 @@ router.get('/products/', function(req, res, next) {
   });
 });
 
+/* Return single product */
+router.get("/products/:id", function(req, res, next) {
+  db_functions.findItemByBy(req.params.id, function(item){
+    res.send(item);
+  })
+});
+
 /* Persist new product */
 router.post('/products/', function(req, res) {
-  auth.post(res, req, status.denied, db_functions.saveItems) ;
+  auth.post(res, req, status.denied, db_functions.saveItem);
 });
 
 /**
@@ -39,7 +50,25 @@ router.get('/users/', function(req, res, next) {
 
 /* Persist new user */
 router.post('/users/', function(req, res) {
-  auth.post(res, req, status.denied, db_functions.saveUser) ;
+  console.log(req.headers);
+  console.log(req.body);
+  auth.post(res, req, status.denied, function(user) {
+    userModel.validateModel(user, crypto.hash, function(user) {
+      db_functions.saveUser(user, function(e) {
+        res.sendStatus(200);
+        res.end();
+      });
+    });
+  }) ;
 });
+
+
+router.post("/oauth/token", function(req, res) {
+  auth.post(res, req, function(){
+    status.denied(res);
+  }, function(token){
+    res.json({"access_token": token});
+  }, auth.grantAccessToken)
+})
 
 module.exports = router;
