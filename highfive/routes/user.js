@@ -8,8 +8,13 @@ exports.validateModel = function(user, success, next) {
 }
 
 exports.findUser = function(search, success) {
+  db_functions.findUser(search, function(err, user){
+    success(user);
+  })
+}
+
+exports.fetchSalt = function(search, success) {
   db_functions.fetchSalt(search, function(err, user){
-    console.log(user);
     success(user);
   })
 }

@@ -1,6 +1,5 @@
 var mongoose = require('mongoose');
 var ObjectId = require('mongoose').Types.ObjectId;
-
 mongoose.connect('mongodb://localhost/production');
 
 var itemsSchema = new mongoose.Schema({
@@ -34,12 +33,13 @@ var usersModel = mongoose.model("users", usersSchema);
 //module.exports = itemModel;
 
 var oauthTokenSchema = new mongoose.Schema({
-  token: String,
-  user_id: String,
-  expires: String
+  access_token: String,
+  session_id: String,
+  expires_in: String,
+  token_type: String
 })
 
-var oauthTokenModel = mongoose.model("oauthToken", oauthTokenSchema);
+var oauthTokenModel = mongoose.model("oauthTokens", oauthTokenSchema);
 
 exports.findItems = function(callback){
   itemModel.find(function (error, items) {
@@ -59,7 +59,6 @@ exports.findItemByBy = function(id, callback){
 
 exports.saveItem = function(item, callback) {
    new itemModel(item).save(function(e){
-     console.log(e);
      callback(200);
    });
 }
@@ -75,15 +74,22 @@ exports.findUsers = function(callback) {
 }
 
 exports.fetchSalt = function(user, callback) {
-  console.log(user);
   usersModel.findOne(user, function(err, obj){
-    console.log("hello");
-    callback(err, obj);
+    if(!err) {
+      callback(err, obj.salt);
+    }
+  });
+}
+
+exports.findUser = function(user, callback) {
+  usersModel.findOne(user, function(err, obj){
+    if(!err) {
+      callback(err, obj);
+    }
   });
 }
 
 exports.saveUser = function(user, success) {
-  console.log(user);
    new usersModel(user).save(function(e){
      success();
    });
@@ -91,12 +97,20 @@ exports.saveUser = function(user, success) {
 
 exports.saveAuthToken = function(user, token, success) {
   new oauthTokenModel(token).save(function(e) {
-    success();
+    success(e);
   })
 }
 
-exports.findAuthToken = function(user, success) {
-  oauthTokenModel.findOne(user, function(err, obj) {
-    success(obj);
+exports.findAuthToken = function(sessionID, success) {
+  oauthTokenModel.findOne(sessionID, function(err, obj) {
+    if(obj) {
+      success({
+        "access_token": obj.access_token,
+        "expires_in": obj.expires_in,
+        "token_type": obj.token_type
+      });
+    }else {
+      success(false);
+    }
   })
 }

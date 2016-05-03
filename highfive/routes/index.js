@@ -7,12 +7,9 @@ var userModel     = require("./user.js");
 var router        = express.Router();
 
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-
-});
-router.post('/', function(req, res) {
-});
+/* GET / */
+router.get('/', function(req, res, next) {});
+router.post('/', function(req, res) {});
 
 /**
 * PRODUCTS
@@ -50,10 +47,8 @@ router.get('/users/', function(req, res, next) {
 
 /* Persist new user */
 router.post('/users/', function(req, res) {
-  console.log(req.headers);
-  console.log(req.body);
   auth.post(res, req, status.denied, function(user) {
-    userModel.validateModel(user, crypto.hash, function(user) {
+    userModel.validateModel(user, crypto.createHash, function(user) {
       db_functions.saveUser(user, function(e) {
         res.sendStatus(200);
         res.end();
@@ -62,12 +57,17 @@ router.post('/users/', function(req, res) {
   }) ;
 });
 
+/**
+* TOKENS
+**/
 
+/* Request access_token */
 router.post("/oauth/token", function(req, res) {
+  console.log("Session: " + req.sessionID);
   auth.post(res, req, function(){
-    status.denied(res);
+    res.sendStatus(500);
   }, function(token){
-    res.json({"access_token": token});
+    res.send(token);
   }, auth.grantAccessToken)
 })
 
