@@ -36,10 +36,25 @@ var oauthTokenSchema = new mongoose.Schema({
   access_token: String,
   session_id: String,
   expires_in: String,
-  token_type: String
+  token_type: String,
+  user_id: String
 })
 
 var oauthTokenModel = mongoose.model("oauthTokens", oauthTokenSchema);
+
+var facebookGrantSchema = new mongoose.Schema({
+  user_id: String,
+  fb_user_id: String,
+  fb_access_token: String
+})
+var facebookGrantModel = mongoose.model("facebookGrant", facebookGrantSchema);
+
+var resourceSchema = new mongoose.Schema({
+  resource_id: String,
+  resource_uri: String,
+  user_id: String
+})
+var resourceModel = mongoose.model("resource", resourceSchema);
 
 exports.findItems = function(callback){
   itemModel.find(function (error, items) {
@@ -75,27 +90,26 @@ exports.findUsers = function(callback) {
 
 exports.fetchSalt = function(user, callback) {
   usersModel.findOne(user, function(err, obj){
-    if(!err) {
+    if(!err)
       callback(err, obj.salt);
-    }
   });
 }
 
 exports.findUser = function(user, callback) {
   usersModel.findOne(user, function(err, obj){
-    if(!err) {
-      callback(err, obj);
-    }
+    if(obj)
+      callback(obj);
   });
 }
 
 exports.saveUser = function(user, success) {
    new usersModel(user).save(function(e){
-     success();
+     success(user);
    });
 }
 
 exports.saveAuthToken = function(user, token, success) {
+  oauthTokenModel.find({access_token: token.access_token}).remove(null);
   new oauthTokenModel(token).save(function(e) {
     success(e);
   })
@@ -112,5 +126,37 @@ exports.findAuthToken = function(sessionID, success) {
     }else {
       success(false);
     }
+  })
+}
+
+exports.findAuthUser = function(sessionID, success) {
+  oauthTokenModel.findOne(sessionID, function(err, obj) {
+    if(obj) 
+      success(obj.user_id);
+    else 
+      success(false);  
+  })
+}
+
+exports.findFacebookGrant = function(facebookGrant, callback) {
+  facebookGrantModel.findOne(user, function(err, obj){
+    if(obj) {
+      callback(err, obj);
+    }
+  });
+}
+
+exports.saveFacebookGrant = function(facebookGrant, success) {
+   new facebookGrantModel(facebookGrant).save(function(e){
+     success(facebookGrant);
+   });
+}
+
+exports.findResource = function(resource, success) {
+  resourceModel.findOne(resource, function(err, obj) {
+    if(obj)
+      success(obj);
+    else 
+      success(false);
   })
 }

@@ -4,21 +4,39 @@ var users        = require('./user.js');
 var crypto       = require('./crypto.js');
 
 exports.post = function(res, req, err, success, next){
-  if(authenticateClient(req))
-    if(next) {
-      req.body.sessionID = req.sessionID;
-      next(req.body, err, success);
+  authenticateClient(req, err, function(status){
+    if(status) {
+      if(next) {
+        req.body.sessionID = req.sessionID;
+        next(req.body, err, success);
+      }else {
+        success(req.body);
+      }
     }else {
-      success(req.body);
+      err();
     }
-  else
-    err(res);
+  })
 }
 
-exports.strictPost = function(res, req, err, success){
-  if(authenticateClient(req) && authorizeClient(req)){
+exports.get = function(res, req, err, success){
+  if(authenticateClient(req, success)) {
     success(req.body);
   }
+}
+
+exports.userAuthorizedPost = function(res, req, err, success) {
+
+  // Standard POST validating (authenticate client)
+  exports.post(res, req, err, function(body){
+    // Extract user from provided access_token
+    console.log(JSON.stringify(body));
+    validateAccessTokenForUser(body, function(userId){
+      // Add the extracted user_id to the object for later usage.
+      body.user_id = userId;
+      success(body);
+    });
+
+  })
 }
 
 exports.grantAccessToken = function(body, err, success) {
@@ -38,26 +56,51 @@ exports.grantAccessToken = function(body, err, success) {
         });
       })
     });
-
   }
 }
 
-authenticateClient = function(req){
+
+exports.validateRpt = function(rpt, success, err){
+  err(rpt);
+}
+
+validateAccessTokenForUser = function(body, success){
+  // db_functions.findAuthUser({"access_token": body.token, "session_id": body.sessionID}, function(userId){
+  //   success(userId);
+  // })  
+
+  // test:
+  db_functions.findAuthUser({"access_token": body.access_token}, function(userId){
+    success(userId);
+  })
+}
+
+authenticateClient = function(req, err, success){
+
   // GET API KEY
   if(req.headers.hasOwnProperty('authorization') && req.headers.authorization == "key") {
-    return true;
+    console.log("Client Authenticated through API-KEY");
+    return success(req.body);
+  }else if(req.headers.hasOwnProperty('authorization')) {
+    db_functions.findAuthToken({"access_token": req.headers.authorization}, function(token) {
+      if(token) {
+        console.log("Client Authenticated through ACCESS TOKEN");
+        success(req.body);
+      }else {
+        err();
+      }
+    })
   }else {
-    return false;
+    err();
   }
 }
 
 authenticateUser = function(user, body, success) {
   crypto.validateHash(body, user.salt, function(challenge){
     if(challenge == user.password) {
-      console.log("AuthenticateUser - TRUE");
       success();
     }else {
-      console.log("AuthenticateUser - FALSE");
+      success(false);
     }
   })
 }
@@ -68,7 +111,8 @@ createToken = function(body, user, success, next) {
     "access_token": user.email,
     "session_id": body.sessionID,
     "expires_in": "2017",
-    "token_type": "bearer"
+    "token_type": "bearer",
+    "user_id": user._id
   };
 
   db_functions.saveAuthToken(user, token, function(token){
